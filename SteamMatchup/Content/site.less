@@ -1,0 +1,87 @@
+﻿@online: #B1FB50;
+
+body {
+	font-size: 12px;
+	font-family: "Trebuchet MS", Verdana, Helvetica, Sans-Serif;
+	color: #232323;
+	background-color: #2D2D2B;
+	padding: 5em;
+}
+
+header, footer, nav, section {
+    display: block;
+}
+
+/* layout */
+#content {
+	background-color: #1C1C1C;
+	color: #959595;
+	padding: 1em;
+
+	h1 {
+		color: white;
+	}
+
+	a {
+		&:hover, &:link, &:visited {
+			color: white;
+		}
+	}
+}
+
+/* Styles for validation helpers
+-----------------------------------------------------------*/
+.error {
+	border: 1px solid #ff0000;
+	background-color: #ffeeee;
+}
+label:after {
+	content: ':';
+}
+label.error {
+	display: none !important;
+}
+
+#users {
+	max-height: 36.7em;
+	overflow-y: auto;
+	.user {
+		vertical-align: top;
+		display: inline-block;
+		margin-right: 1.5em;
+
+		.game {
+			&.missing {
+				opacity: .1;
+			}
+		}
+
+		.remove {
+			float: right;
+			font-size: .6em;
+			line-height: 2em;
+			vertical-align: bottom;
+			padding-right: 1em;
+		}
+	}
+}
+#friends {
+	.friend {
+		display: inline-block;
+		width: 10em;
+		padding: .5em;
+		background-color: #545454;
+		border-radius: 3px;
+		margin: .5em;
+
+		.icon-holder {
+			float: left;
+		}
+
+		a {
+			display: block;
+			overflow: hidden;
+			white-space: nowrap;
+		}
+	}
+}

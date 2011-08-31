@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<publishData>
+  <publishProfile publishUrl="http://steammatchup.com" deleteExistingFiles="False" ftpAnonymousLogin="False" ftpPassiveMode="True" msdeploySite="steammatchup.com" msdeploySiteID="" msdeployRemoteSitePhysicalPath="" msdeployAllowUntrustedCertificate="False" msdeploySkipExtraFilesOnServer="True" msdeployMarkAsApp="True" profileName="Amazon" publishMethod="MSDeploy" replaceMatchingFiles="True" userName="administrator" savePWD="False" userPWD="" SelectedForPublish="True" />
+</publishData>

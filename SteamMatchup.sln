@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamMatchUp", "SteamMatchup\SteamMatchUp.csproj", "{319085EC-C5BA-4499-A295-5EDF1C4A2FC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamMatchUp.Core", "SteamMatchup.Core\SteamMatchUp.Core.csproj", "{9824A617-3B4F-4864-9EF9-8C31616A4B8B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{319085EC-C5BA-4499-A295-5EDF1C4A2FC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{319085EC-C5BA-4499-A295-5EDF1C4A2FC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{319085EC-C5BA-4499-A295-5EDF1C4A2FC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{319085EC-C5BA-4499-A295-5EDF1C4A2FC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9824A617-3B4F-4864-9EF9-8C31616A4B8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9824A617-3B4F-4864-9EF9-8C31616A4B8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9824A617-3B4F-4864-9EF9-8C31616A4B8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9824A617-3B4F-4864-9EF9-8C31616A4B8B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		EnterpriseLibraryConfigurationToolBinariesPath = packages\Unity.2.1.505.0\lib\NET35
+	EndGlobalSection
+EndGlobal

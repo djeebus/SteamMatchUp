@@ -1,0 +1,60 @@
+﻿@{
+    ViewBag.Title = "Steam Matchup";
+}
+@section head {
+    <script type="text/javascript" src="http://connect.facebook.net/en_US/all.js#appId=125493790874497&amp;xfbml=1"></script>
+    <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+    <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+    <script type="text/javascript" src="@Url.Content("~/Scripts/matchup.js")"></script>
+}
+<script id="game" type="text/x-jquery-tmpl">
+    <div class='game ${$item.css} players-${players}'>
+        <a href='${steam}'>
+            <img src='${icon}' alt='${name}' />
+        </a>
+    </div>
+</script>
+
+<script id="friend" type="text/x-jquery-tmpl">
+    <div class='friend' id='${id}'>
+        <div class='icon-holder'>
+            <img src='${icon}' alt='${name}' />
+        </div>
+        <a href='${steam}' target='_blank'>${name}</a>
+        <a class='add' href="javascript:void(0)">add</a>
+    </div>
+</script>
+
+<h2>Match Maker</h2>
+<div>
+    @using (Html.BeginForm("GetGames", "Home", FormMethod.Post, new Dictionary<string, object> { { "id", "add-user" } }))
+    {
+        <label for="username">Steam Community Id</label>
+        <span>http://steamcommunity.com/profiles/</span><input id="username" name="username" type="text" class="required" />
+        <input type="submit" value="Add" />
+        <div class="show-missing" style="display: none">
+            <span>Show games that have at least </span>
+            <select id="show-missing"></select>
+            <span> players in common.</span>
+        </div>
+    }
+    <div id="options">
+        <h3><a href='javascript:void(0)'>Friends</a></h3>
+        <div id="friends"></div>
+    </div>
+    <div id="users">
+    </div>
+</div>
+
+<div class="show-appreciation">
+    <h2>Give some love!</h2>
+    <p>If you like this service, advertise it for the world to see!</p>
+    <div>
+        <div id="fb-root"></div>
+        <fb:like href="http://steammatchup.com" send="true" width="450" show_faces="true"
+            font=""></fb:like>
+    </div>
+    <div>
+        <g:plusone></g:plusone>
+    </div>
+</div>
