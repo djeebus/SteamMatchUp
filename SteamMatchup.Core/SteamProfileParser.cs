@@ -21,9 +21,7 @@ namespace SteamMatchUp
 
 		public FriendCollection GetFriends(string steamCommunityId)
 		{
-			var url = GetProfileUrl(steamCommunityId, friendsPage);
-
-			var content = DownloadContent(url);
+			var content = DownloadContent(steamCommunityId, friendsPage);
 
 			var doc = CleanseHtml(content);
 
@@ -32,7 +30,6 @@ namespace SteamMatchUp
 			var toreturn = new FriendCollection(GetFriendsFromPage(friendsContainer).ToArray())
 			{
 				Username = steamCommunityId,
-				ProfileUrl = url,
 			};
 
 			return toreturn;
@@ -60,9 +57,7 @@ namespace SteamMatchUp
 
 		public GameCollection GetGames(string steamCommunityId)
 		{
-			var url = GetProfileUrl(steamCommunityId, gamesPage);
-
-			var content = DownloadContent(url);
+			var content = DownloadContent(steamCommunityId, gamesPage);
 
 			var doc = CleanseHtml(content);
 
@@ -71,7 +66,6 @@ namespace SteamMatchUp
 			var toreturn = new GameCollection(GetGamesFromContainer(gamesContainer).ToList())
 			{
 				Username = steamCommunityId,
-				ProfileUrl = url,
 			};
 
 			return toreturn;
@@ -97,21 +91,26 @@ namespace SteamMatchUp
 
 		private static string GetProfileUrl(string steamCommunityId, string page)
 		{
-			string format = regex.IsMatch(steamCommunityId) ? urlNumberFormat : urlNameFormat;
+			string format = urlNumberFormat; // regex.IsMatch(steamCommunityId) ? urlNumberFormat : urlNameFormat;
 
 			return string.Format(format, steamCommunityId, page);
 		}
 
-		private static string DownloadContent(string url)
+		private static string DownloadContent(string steamCommunityId, string page)
 		{
 			WebClient wc = new WebClient();
 
-			var content = wc.DownloadString(url);
+			foreach (var format in new string[] { urlNameFormat, urlNumberFormat })
+			{
+				var url = string.Format(format, steamCommunityId, page);
 
-			if (content.Contains("The specified profile could not be found."))
-				throw new Exception("This person does not have a profile set up.");
+				var content = wc.DownloadString(url);
 
-			return content;
+				if (!content.Contains("The specified profile could not be found."))
+					return content;
+			}
+
+			throw new Exception("This person does not have a profile set up.");
 		}
 
 		private static XmlDocument CleanseHtml(string text)
