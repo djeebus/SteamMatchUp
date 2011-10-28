@@ -35,7 +35,7 @@ namespace SteamMatchUp
 			return toreturn;
 		}
 
-		private static IEnumerable<Friend> GetFriendsFromPage(XmlNode parent)
+		private static IEnumerable<User> GetFriendsFromPage(XmlNode parent)
 		{
 			foreach (XmlElement friend in parent.SelectNodes("div"))
 			{
@@ -45,15 +45,47 @@ namespace SteamMatchUp
 				var id = link.Segments[2];
 				var img = friend.SelectSingleNode(".//img").Attributes["src"].Value;
 
-				yield return new Friend
+				yield return new User
 				{
-					CommunityId = id,
+					Id = id,
 					CommunityUrl = link.ToString(),
 					IconUrl = img,
-					Name = name,
+					Username = name,
 				};
 			}
 		}
+
+        public User GetUser(string steamCommunityId)
+        {
+            string actualPage;
+            var content = DownloadContent(steamCommunityId, string.Empty, out actualPage);
+
+            var doc = CleanseHtml(content);
+
+            var username = doc.SelectSingleNode("//h1").InnerText.Trim();
+            var imageUrl = doc.SelectSingleNode("//div[@class='avatarFull']/img/@src").Value.Replace("_full", string.Empty).Trim();
+
+            return new User
+            {
+                Id = steamCommunityId,
+                Username = username,
+                CommunityUrl = actualPage,
+                IconUrl = imageUrl,
+                Stats = new List<Stat>(GetStats(doc)),
+            };
+        }
+
+        private IEnumerable<Stat> GetStats(XmlDocument doc)
+        {
+            foreach (XmlElement stat in doc.SelectNodes("//div[@class='statsItem']"))
+            {
+                yield return new Stat
+                {
+                    Name = stat.ChildNodes[0].InnerText.Trim(),
+                    Value = stat.ChildNodes[1].InnerText.Trim(),
+                };
+            }
+        }
 
 		public GameCollection GetGames(string steamCommunityId)
 		{
@@ -96,7 +128,12 @@ namespace SteamMatchUp
 			return string.Format(format, steamCommunityId, page);
 		}
 
-		private static string DownloadContent(string steamCommunityId, string page)
+        private static string DownloadContent(string steamCommunityId, string page)
+        {
+            string url;
+            return DownloadContent(steamCommunityId, page, out url);
+        }
+		private static string DownloadContent(string steamCommunityId, string page, out string actualPage)
 		{
 			WebClient wc = new WebClient();
 
@@ -106,8 +143,11 @@ namespace SteamMatchUp
 
 				var content = wc.DownloadString(url);
 
-				if (!content.Contains("The specified profile could not be found."))
-					return content;
+                if (!content.Contains("The specified profile could not be found."))
+                {
+                    actualPage = url;
+                    return content;
+                }
 			}
 
 			throw new Exception("This person does not have a profile set up.");
@@ -128,6 +168,5 @@ namespace SteamMatchUp
 
 			return doc;
 		}
-
-	}
+    }
 }

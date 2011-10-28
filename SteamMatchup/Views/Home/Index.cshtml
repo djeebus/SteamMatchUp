@@ -5,23 +5,56 @@
     <script type="text/javascript" src="http://connect.facebook.net/en_US/all.js#appId=125493790874497&amp;xfbml=1"></script>
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
-    <script type="text/javascript" src="@Url.Content("~/Scripts/matchup.js")"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/1.2.1/knockout-min.js"></script>
+    <script type="text/javascript" src="http://cloud.github.com/downloads/SteveSanderson/knockout/knockout-1.2.1.debug.js"></script>
+    <script type="text/javascript" src="http://learn.knockoutjs.com/Scripts/Lib/jquery.address.js"></script>
+    <script type="text/javascript" src="@Url.Content("~/scripts/knockout.address.js")"></script>
+    <script type="text/javascript" src="https://raw.github.com/documentcloud/underscore/master/underscore.js"></script>
+    <script type="text/javascript" src="http://fgnass.github.com/spin.js/spin.js"></script>
 }
+
 <script id="game" type="text/x-jquery-tmpl">
-    <div class='game ${$item.css} players-${players}'>
-        <a href='${steam}'>
-            <img src='${icon}' alt='${name}' />
-        </a>
+    <tr data-bind="visible: matchupViewModel.minimumInCommon() <= players().length, css: { 'no-players': players().length == 0 }">
+        <td><a href="${url}"><img src="${iconUrl}" alt="${name}" /></a></td>
+        <td data-bind="template: { name: 'player', foreach: players }"></td>
+    </tr>
+</script>
+
+<script id="player" type="text/x-jquery-tmpl">
+    <div class='user' id='${id}'>
+        <div class='icon-holder'>
+            <img src='${iconUrl}' alt='${name}' />
+        </div>
+        <a class='name' href='${url}' target='_blank'>${name}</a>
     </div>
 </script>
 
 <script id="friend" type="text/x-jquery-tmpl">
-    <div class='friend' id='${id}'>
+    <div class='user' id='${id}'>
         <div class='icon-holder'>
-            <img src='${icon}' alt='${name}' />
+            <img src='${iconUrl}' alt='${name}' />
         </div>
-        <a href='${steam}' target='_blank'>${name}</a>
-        <a class='add' href="javascript:void(0)">add</a>
+        <a class='name' href='${url}' target='_blank'>${name}</a>
+        <a class='add' href="javascript:void(0)" data-bind="click: add">add</a>
+    </div>
+</script>
+
+<script id="gamer" type="text/x-jquery-tmpl">
+    <div class='user' id='${id}'>
+        <div class='icon-holder'>
+            <img src='${iconUrl}' alt='${name}' />
+        </div>
+        <a class='name' href='${url}' target='_blank'>${name}</a>
+        <a class='remove' href='javascript:void(0)' data-bind="click: remove">remove</a>
+        <a class='friends' href='javascript:void(0)'>friends</a>
+        <div class='friends-dialog' data-bind="template: { name: 'friend', foreach: friends }" />
+        <div class='stats' data-bind="template: { name: 'stat', foreach: stats }" />
+    </div>
+</script>
+
+<script id="stat" type="text/x-jquery-tmpl">
+    <div class='stat'>
+        <span class='name'>${name}</span>: <span class='value'>${value}</span>
     </div>
 </script>
 
@@ -29,20 +62,33 @@
 <div>
     @using (Html.BeginForm("GetGames", "Home", FormMethod.Post, new Dictionary<string, object> { { "id", "add-user" } }))
     {
+        <div class="errors"></div>
+        <div class="loading"></div>
         <label for="username">Steam Community Id</label>
-        <span>http://steamcommunity.com/profiles/</span><input id="username" name="username" type="text" class="required" />
-        <input type="submit" value="Add" />
-        <div class="show-missing" style="display: none">
+        <span>http://steamcommunity.com/profiles/</span>
+        <input type="text" class="required" name="username" data-bind="value: newPlayerName" />
+        <button data-bind="click: submitNewPlayer">Add</button>
+    }
+    <h3><a href="javascript:void(0)"><span data-bind="text: gamers().length"></span> Gamers</a></h3>
+    <div id="players" data-bind="template: { name: 'gamer', foreach: gamers }"></div>
+
+    <h3><a href="javascript:void(0)"><span data-bind="text: games().length"></span> Games</a></h3>
+    <div id="games">
+        <div class="show-missing" data-bind="visible: gamers().length > 1">
             <span>Show games that have at least </span>
-            <select id="show-missing"></select>
+            <select id="show-missing" data-bind="playersList: gamers().length, value: minimumInCommon"></select>
             <span> players in common.</span>
         </div>
-    }
-    <div id="options">
-        <h3><a href='javascript:void(0)'>Friends</a></h3>
-        <div id="friends"></div>
-    </div>
-    <div id="users">
+            
+        <table>
+            <thead>
+                <tr>
+                    <th>Game</th>
+                    <th>Players</th>
+                </tr>
+            </thead>
+            <tbody data-bind="template: { name: 'game', foreach: games }"></tbody>
+        </table>
     </div>
 </div>
 
@@ -51,10 +97,11 @@
     <p>If you like this service, advertise it for the world to see!</p>
     <div>
         <div id="fb-root"></div>
-        <fb:like href="http://steammatchup.com" send="true" width="450" show_faces="true"
-            font=""></fb:like>
+        <fb:like href="http://steammatchup.com" send="true" width="450" show_faces="true" font=""></fb:like>
     </div>
     <div>
         <g:plusone></g:plusone>
     </div>
 </div>
+
+<script type="text/javascript" src="@Url.Content("~/Scripts/matchup-ko.js")"></script>

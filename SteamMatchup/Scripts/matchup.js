@@ -93,7 +93,7 @@
 				data.username = username;
 
 				friends[friends.length] = data;
-
+                    
 				updateFriends();
 			},
 			error: function (req, status) {

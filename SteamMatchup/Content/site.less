@@ -17,71 +17,109 @@ header, footer, nav, section {
 	background-color: #1C1C1C;
 	color: #959595;
 	padding: 1em;
+}
 
-	h1 {
+h1 {
+	color: white;
+}
+
+a {
+	&:hover, &:link, &:visited {
 		color: white;
-	}
-
-	a {
-		&:hover, &:link, &:visited {
-			color: white;
-		}
 	}
 }
 
 /* Styles for validation helpers
 -----------------------------------------------------------*/
-.error {
-	border: 1px solid #ff0000;
-	background-color: #ffeeee;
+.errors {
+	display: none;
+
+	border: 1px solid #F90;
+	background-color: black;
+	color: #CDCAC1;
+
+	margin: 1em;
+	margin-left: 28em;
+	padding: 1em;
+}
+input {
+	background-color: #4D4B49;
+	border: 1px solid #82807C;
+	color: white;
+}
+input.error {
+	border: 1px solid #F90;
 }
 label:after {
 	content: ':';
 }
-label.error {
-	display: none !important;
+.user {
+	display: inline-block;
+	width: 10em;
+	padding: .5em;
+	background-color: #545454;
+	border-radius: 3px;
+	margin: .5em;
+
+	.icon-holder {
+		float: left;
+	}
+
+	a.name {
+		display: block;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	.stats {
+		clear: both;
+	}
 }
 
-#users {
-	max-height: 36.7em;
-	overflow-y: auto;
-	.user {
-		vertical-align: top;
-		display: inline-block;
-		margin-right: 1.5em;
+#add-user {
+	width: 50em;
 
-		.game {
-			&.missing {
+	.loading {
+		display: none;
+
+		width: 3em;
+		height: 3em;
+		float: right;
+	}
+}
+#players {
+	.user {
+		width: 18em;
+	}
+}
+#games {
+	table {
+		max-height: 36.7em;
+		overflow-y: auto;
+
+		.player {
+			vertical-align: top;
+			display: inline-block;
+			margin-right: 1.5em;
+
+			.missing {
 				opacity: .1;
 			}
 		}
-
-		.remove {
-			float: right;
-			font-size: .6em;
-			line-height: 2em;
-			vertical-align: bottom;
-			padding-right: 1em;
-		}
 	}
 }
-#friends {
-	.friend {
-		display: inline-block;
-		width: 10em;
-		padding: .5em;
-		background-color: #545454;
-		border-radius: 3px;
-		margin: .5em;
 
-		.icon-holder {
-			float: left;
-		}
+.friends-dialog {
+	display: none;
+}
 
-		a {
-			display: block;
-			overflow: hidden;
-			white-space: nowrap;
-		}
+.ui-dialog {
+	background-color: grey;
+	border: solid 3px white;
+	border-radius: 1em;
+	padding: .5em;
+
+	.ui-dialog-titlebar-close {
+		float: right;
 	}
 }

@@ -86,6 +86,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Global.asax" />
+    <Content Include="Scripts\knockout.address.js" />
+    <Content Include="Scripts\matchup-ko.js" />
     <Content Include="Scripts\matchup.js" />
     <Content Include="Scripts\modernizr-1.7.js" />
     <Content Include="Scripts\modernizr-1.7.min.js" />
