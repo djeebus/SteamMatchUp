@@ -1,11 +1,17 @@
 ﻿@online: #B1FB50;
 
+.inline-block {
+	display: inline-block;
+	zoom:1;
+	*display:inline;
+}
+
 body {
 	font-size: 12px;
 	font-family: "Trebuchet MS", Verdana, Helvetica, Sans-Serif;
 	color: #232323;
 	background-color: #2D2D2B;
-	padding: 5em;
+	padding: 2em;
 }
 
 header, footer, nav, section {
@@ -15,6 +21,7 @@ header, footer, nav, section {
 /* layout */
 #content {
 	background-color: #1C1C1C;
+	border-radius: 2em;
 	color: #959595;
 	padding: 1em;
 }
@@ -54,7 +61,7 @@ label:after {
 	content: ':';
 }
 .user {
-	display: inline-block;
+	.inline-block;
 	width: 10em;
 	padding: .5em;
 	background-color: #545454;
@@ -93,20 +100,18 @@ label:after {
 	}
 }
 #games {
-	table {
-		max-height: 36.7em;
-		overflow-y: auto;
-
-		.player {
-			vertical-align: top;
-			display: inline-block;
-			margin-right: 1.5em;
-
-			.missing {
-				opacity: .1;
+	clear: both;
+	#games-list { 
+		.game {
+			clear: left;
+			> a {
+				float: left;
 			}
 		}
 	}
+}
+#show-appreciation {
+	clear: both;
 }
 
 .friends-dialog {
@@ -121,5 +126,34 @@ label:after {
 
 	.ui-dialog-titlebar-close {
 		float: right;
+	}
+}
+
+@media screen and (max-width: 750px) {
+	body {
+		iframe {
+			width: 250px !important;
+		}
+		#add-user {
+			width: auto;
+			label {
+				display: block;
+			}
+			span {
+				display: none;
+			}
+			.errors {
+				margin-left: 0em;
+			}
+		}
+		#games {
+			#games-list {
+				.game {
+					> a {
+						float: none;
+					}
+				}
+			}
+		}
 	}
 }

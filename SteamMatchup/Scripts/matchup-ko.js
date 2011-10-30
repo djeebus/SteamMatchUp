@@ -24,7 +24,7 @@ $form.validate({
 $('#players .user a.friends').live('click', function () {
     $(this).next('.friends-dialog').dialog({
         title: 'Friends',
-        width: 580
+        width: 145
     });
 });
 
@@ -55,6 +55,8 @@ var Gamer = function (user, friends, context) {
 
     this.add = function () {
         this.context.addPlayer(this.id);
+
+        $('[role=dialog]').hide();
     };
 
     this.remove = function () {
@@ -140,14 +142,14 @@ var matchupViewModel = {
                 var gamer = this.handleUserInfo(username, data.User, data.Friends);
 
                 this.handleGames(gamer, data.Games);
-
-                this.minimumInCommon(this.gamers().length);
             },
             error: function () {
                 alert('error pulling user information');
             },
             complete: function () {
                 this.enableInputs();
+
+                this.newPlayerName('');
             }
         });
     },
@@ -251,6 +253,9 @@ matchupViewModel.csvGamers.subscribe(function (newValue) {
     }
 });
 ko.linkObservableToUrl(matchupViewModel.csvGamers, "gamers");
+
+// doesn't work to reload state due to async callbacks
+//ko.linkObservableToUrl(matchupViewModel.minimumInCommon, "min");
 
 window.matchupViewModel = matchupViewModel;
 ko.applyBindings(matchupViewModel);
