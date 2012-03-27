@@ -62,7 +62,7 @@ namespace SteamMatchUp
 
             var doc = CleanseHtml(content);
 
-            var username = doc.SelectSingleNode("//h1").InnerText.Trim();
+            var username = doc.SelectSingleNode("//h1").FirstChild.InnerText.Trim();
             var imageUrl = doc.SelectSingleNode("//div[@class='avatarFull']/img/@src").Value.Replace("_full", string.Empty).Trim();
 
             return new User
@@ -95,12 +95,26 @@ namespace SteamMatchUp
 
 			var gamesContainer = doc.SelectSingleNode("//div[@class='games_list_tab_content']");
 
-			var toreturn = new GameCollection(GetGamesFromContainer(gamesContainer).ToList())
-			{
-				Username = steamCommunityId,
-			};
+            var js = gamesContainer.SelectSingleNode("//script[not(@src)]").InnerText.Trim();
 
-			return toreturn;
+            var rgGames = js.Substring(0, js.IndexOf(';') - 1); // get all the text until the first semicolon
+
+            rgGames = rgGames.Substring("var rgGames = ".Length); // skip the assignment part of the statement
+
+            var code = (Newtonsoft.Json.Linq.JArray)Newtonsoft.Json.JsonConvert.DeserializeObject(rgGames);
+
+            var games = from g in code 
+                        select new Game 
+                        { 
+                            Name = (string)g["name"], 
+                            IconUrl = (string)g["logo"], 
+                            SteamUrl = string.Format("http://store.steampowered.com/app/{0}", g["appid"]),
+                        };
+
+            return new GameCollection(games)
+            {
+                Username = steamCommunityId,
+            };
 		}
 
 		private static IEnumerable<Game> GetGamesFromContainer(XmlNode parent)
