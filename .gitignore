@@ -1,2 +1,8 @@
-
+*.ncrunchsolution
+*.ncrunchproject
 *.suo
+*.user
+bin
+obj
+App_Data
+packages/jQuery.UI.Combined.1.8.20/Content/Content

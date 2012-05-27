@@ -97,7 +97,8 @@ var matchupViewModel = {
     csvGamers: ko.observable(''),
 
     updateCsv: function () {
-        this.csvGamers(_.map(this.gamers(), function (g) { return g.id; }).toString());
+        var gamerIds = _.map(this.gamers(), function (g) { return g.id; });
+        this.csvGamers(gamerIds.toString());
     },
 
     submitNewPlayer: function () {

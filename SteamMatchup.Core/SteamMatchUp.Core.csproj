@@ -39,6 +39,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -49,10 +50,21 @@
     <Compile Include="FriendCollection.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="GameCollection.cs" />
+    <Compile Include="HttpClient.cs" />
+    <Compile Include="IHttpClient.cs" />
+    <Compile Include="ISteamGameParser.cs" />
     <Compile Include="ISteamProfileParser.cs" />
+    <Compile Include="IWebpageCache.cs" />
+    <Compile Include="IWebpageCleaner.cs" />
+    <Compile Include="ProfileSearchResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SteamGameParser.cs" />
     <Compile Include="SteamProfileParser.cs" />
+    <Compile Include="ISteamProfileSearcher.cs" />
+    <Compile Include="SteamProfileSearcher.cs" />
     <Compile Include="User.cs" />
+    <Compile Include="WebpageCache.cs" />
+    <Compile Include="WebpageCleaner.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

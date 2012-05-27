@@ -13,26 +13,51 @@ namespace SteamMatchUp
 	{
 		const string urlNameFormat = "http://steamcommunity.com/id/{0}/{1}";
 		const string urlNumberFormat = "http://steamcommunity.com/profiles/{0}/{1}";
-		
+
 		const string gamesPage = "games?tab=all";
 		const string friendsPage = "friends";
 
 		static readonly Regex regex = new Regex(@"^\d+%", RegexOptions.Compiled);
 
+		private readonly IWebpageCache _cache;
+
+		public SteamProfileParser(IWebpageCache cache)
+		{
+			this._cache = cache;
+		}
+
 		public FriendCollection GetFriends(string steamCommunityId)
 		{
-			var content = DownloadContent(steamCommunityId, friendsPage);
+			var doc = DownloadContent(steamCommunityId, friendsPage);
+            if (doc == null)
+                return null;
 
-			var doc = CleanseHtml(content);
+			string username = GetUserNameFromDoc(doc);
 
 			var friendsContainer = doc.SelectSingleNode("//div[@id='memberList']");
 
-			var toreturn = new FriendCollection(GetFriendsFromPage(friendsContainer).ToArray())
+			var friends = (from f in GetFriendsFromPage(friendsContainer)
+						   orderby f.Username
+						   select f).ToArray();
+
+			var toreturn = new FriendCollection(friends)
 			{
-				Username = steamCommunityId,
+				Username = username ?? steamCommunityId,
 			};
 
 			return toreturn;
+		}
+
+		private string GetUserNameFromDoc(XmlDocument doc)
+		{
+            if (doc == null)
+                throw new ArgumentNullException("doc");
+
+			var x = doc.SelectSingleNode("//h1");
+			if (x == null)
+				return null;
+
+			return x.InnerText.Trim();
 		}
 
 		private static IEnumerable<User> GetFriendsFromPage(XmlNode parent)
@@ -55,132 +80,94 @@ namespace SteamMatchUp
 			}
 		}
 
-        public User GetUser(string steamCommunityId)
-        {
-            string actualPage;
-            var content = DownloadContent(steamCommunityId, string.Empty, out actualPage);
-
-            var doc = CleanseHtml(content);
-
-            var username = doc.SelectSingleNode("//h1").FirstChild.InnerText.Trim();
-            var imageUrl = doc.SelectSingleNode("//div[@class='avatarFull']/img/@src").Value.Replace("_full", string.Empty).Trim();
-
-            return new User
-            {
-                Id = steamCommunityId,
-                Username = username,
-                CommunityUrl = actualPage,
-                IconUrl = imageUrl,
-                Stats = new List<Stat>(GetStats(doc)),
-            };
-        }
-
-        private IEnumerable<Stat> GetStats(XmlDocument doc)
-        {
-            foreach (XmlElement stat in doc.SelectNodes("//div[@class='statsItem']"))
-            {
-                yield return new Stat
-                {
-                    Name = stat.ChildNodes[0].InnerText.Trim(),
-                    Value = stat.ChildNodes[1].InnerText.Trim(),
-                };
-            }
-        }
-
-		public GameCollection GetGames(string steamCommunityId)
+		public User GetUser(string steamCommunityId)
 		{
-			var content = DownloadContent(steamCommunityId, gamesPage);
+			string actualPage;
+			var doc = DownloadContent(steamCommunityId, string.Empty, out actualPage);
 
-			var doc = CleanseHtml(content);
+			var username = doc.SelectSingleNode("//h1").FirstChild.InnerText.Trim();
+			var imageUrl = doc.SelectSingleNode("//div[@class='avatarFull']/img/@src").Value.Replace("_full", string.Empty).Trim();
 
-			var gamesContainer = doc.SelectSingleNode("//div[@class='games_list_tab_content']");
-
-            var js = gamesContainer.SelectSingleNode("//script[not(@src)]").InnerText.Trim();
-
-            var rgGames = js.Substring(0, js.IndexOf(';') - 1); // get all the text until the first semicolon
-
-            rgGames = rgGames.Substring("var rgGames = ".Length); // skip the assignment part of the statement
-
-            var code = (Newtonsoft.Json.Linq.JArray)Newtonsoft.Json.JsonConvert.DeserializeObject(rgGames);
-
-            var games = from g in code 
-                        select new Game 
-                        { 
-                            Name = (string)g["name"], 
-                            IconUrl = (string)g["logo"], 
-                            SteamUrl = string.Format("http://store.steampowered.com/app/{0}", g["appid"]),
-                        };
-
-            return new GameCollection(games)
-            {
-                Username = steamCommunityId,
-            };
+			return new User
+			{
+				Id = steamCommunityId,
+				Username = username,
+				CommunityUrl = actualPage,
+				IconUrl = imageUrl,
+				Stats = new List<Stat>(GetStats(doc)),
+			};
 		}
 
-		private static IEnumerable<Game> GetGamesFromContainer(XmlNode parent)
+		private IEnumerable<Stat> GetStats(XmlDocument doc)
 		{
-			foreach (XmlElement game in parent.SelectNodes("div[@class='gameListRow']"))
+			foreach (XmlElement stat in doc.SelectNodes("//div[@class='statsItem']"))
 			{
-				var logo = game.SelectSingleNode(".//div[@class='gameLogo']/a");
-				var url = logo.Attributes["href"].Value;
-				var name = game.SelectSingleNode(".//h4").InnerText;
-				var img = logo.SelectSingleNode("img").Attributes["src"].Value;
-
-				yield return new Game
+				yield return new Stat
 				{
-					IconUrl = img,
-					Name = name,
-					SteamUrl = url
+					Name = stat.ChildNodes[0].InnerText.Trim(),
+					Value = stat.ChildNodes[1].InnerText.Trim(),
 				};
 			}
 		}
 
-		private static string GetProfileUrl(string steamCommunityId, string page)
+		public GameCollection GetGames(string steamCommunityId)
 		{
-			string format = urlNumberFormat; // regex.IsMatch(steamCommunityId) ? urlNumberFormat : urlNameFormat;
+			var doc = DownloadContent(steamCommunityId, gamesPage);
+            if (doc == null)
+                return null;
 
-			return string.Format(format, steamCommunityId, page);
+			var gamesContainer = doc.SelectSingleNode("//div[@class='games_list_tab_content']");
+
+			var js = gamesContainer.SelectSingleNode("//script[not(@src)]").InnerText.Trim();
+
+			var rgGames = js.Substring(0, js.IndexOf(';') - 1); // get all the text until the first semicolon
+
+			rgGames = rgGames.Substring("var rgGames = ".Length); // skip the assignment part of the statement
+
+			var code = (Newtonsoft.Json.Linq.JArray)Newtonsoft.Json.JsonConvert.DeserializeObject(rgGames);
+
+			var games = from g in code
+						let id = (int)g["appid"]
+						select new Game
+						{
+							Id = id.ToString(),
+							Name = (string)g["name"],
+							IconUrl = (string)g["logo"],
+							SteamUrl = string.Format("http://store.steampowered.com/app/{0}", id),
+						};
+
+			return new GameCollection(games)
+			{
+				Username = GetUserNameFromDoc(doc) ?? steamCommunityId,
+			};
 		}
 
-        private static string DownloadContent(string steamCommunityId, string page)
-        {
-            string url;
-            return DownloadContent(steamCommunityId, page, out url);
-        }
-		private static string DownloadContent(string steamCommunityId, string page, out string actualPage)
+		private XmlDocument DownloadContent(string steamCommunityId, string page)
 		{
-			WebClient wc = new WebClient();
+			string url;
+			return DownloadContent(steamCommunityId, page, out url);
+		}
+
+		private XmlDocument DownloadContent(string steamCommunityId, string page, out string actualPage)
+		{
+            actualPage = null;
 
 			foreach (var format in new string[] { urlNameFormat, urlNumberFormat })
 			{
-				var url = string.Format(format, steamCommunityId, page);
+				var url = new Uri(string.Format(format, steamCommunityId, page));
 
-				var content = wc.DownloadString(url);
+				var doc = this._cache.GetContent(url);
+                if (doc == null)
+                    continue;
 
-                if (!content.Contains("The specified profile could not be found."))
-                {
-                    actualPage = url;
-                    return content;
-                }
+				if (doc.OuterXml.Contains("The specified profile could not be found."))
+					continue;
+
+				actualPage = url.ToString();
+				return doc;
 			}
 
-			throw new Exception("This person does not have a profile set up.");
+            return null;
 		}
-
-		private static XmlDocument CleanseHtml(string text)
-		{
-			var streamReader = new StringReader(text);
-			
-			var doc = new XmlDocument();
-
-			Sgml.SgmlReader sgmlReader = new Sgml.SgmlReader();
-			sgmlReader.DocType = "HTML";
-			sgmlReader.InputStream = streamReader;
-
-			doc.XmlResolver = null;
-			doc.Load(sgmlReader);
-
-			return doc;
-		}
-    }
+	}
 }
