@@ -7,7 +7,7 @@
 <!doctype html>
 <html>
     <head>
-        <title>SteamFilter</title>    
+        <title>SteamFilter</title>
         <link rel="Stylesheet" type="text/css" href="@url.Content("~/content/filter.less")" />
         <script type="text/javascript" src="~/scripts/modernizr-2.5.3.js"></script>
     </head>
@@ -15,6 +15,7 @@
         <div id="content-container">
             <div id="ajax-in-progress">
                 @*<div class="loading"></div>*@
+                <div id="prompt">Please wait ... </div>
                 <div id="status"></div>
             </div>
 
@@ -68,6 +69,7 @@
                     <li class='friend'>
                         <span data-bind="text: name"></span>
                         <a href="javascript:void(0)" data-bind="click: select, visible: canSelect">add</a>
+                        <span data-bind="visible: isAdding">Adding, please wait ... </span>
                     </li>
                 </script>
 

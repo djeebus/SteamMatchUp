@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net;
+using System.Diagnostics;
 
 namespace SteamMatchUp
 {
@@ -13,17 +14,23 @@ namespace SteamMatchUp
             if (uri == null)
                 throw new ArgumentNullException("uri");
 
-            var client = new WebClient();
-
-            if (headers != null)
+            using (var client = new WebClient())
             {
-                foreach (var key in headers.Keys)
+                if (headers != null)
                 {
-                    client.Headers.Add(key, headers[key]);
+                    foreach (var key in headers.Keys)
+                    {
+                        client.Headers.Add(key, headers[key]);
+                    }
                 }
-            }
 
-            return client.DownloadString(uri);
+                DateTime start = DateTime.Now;
+                var content = client.DownloadString(uri);
+                var elapsed = DateTime.Now - start;
+                Trace.WriteLine(string.Format("Downloading '{0}' took {1} milliseconds", uri, elapsed.TotalMilliseconds));
+
+                return content;
+            }
         }
     }
 }

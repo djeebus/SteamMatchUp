@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
 
 namespace SteamMatchUp.Core.Tests
 {
@@ -21,6 +22,20 @@ namespace SteamMatchUp.Core.Tests
             var client = new HttpClient();
 
             client.GetContent(null, null);
+        }
+
+        [TestMethod]
+        public void ParallelDownloads()
+        {
+            var client = new HttpClient();
+
+            var totalThreads = 100;
+            var url = new Uri("http://www.google.com");
+
+            for (var x = 0; x < totalThreads; x++)
+            {
+                new Thread(new ThreadStart(() => client.GetContent(url, null))).Start();
+            }
         }
 
         [TestMethod]

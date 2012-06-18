@@ -49,21 +49,21 @@ namespace SteamMatchUp.Website.Controllers
             {
                 success = true,
                 results = (from id in gamerIds
-                          let profile = _profileParser.GetGames(id)
-                          let friends = _profileParser.GetFriends(id)
-                          select new gamer
-                          {
-                              id = id,
-                              name = profile.Username,
-                              gameIds = (from g in profile
-                                         select g.Id).ToArray(),
-                              friends = (from f in friends
-                                         select new friend
-                                         {
-                                             id = f.Id,
-                                             name = f.Username,
-                                         }).ToArray(),
-                          }).ToArray(),
+                           let profile = _profileParser.GetGames(id)
+                           let friends = _profileParser.GetFriends(id)
+                           select new gamer
+                           {
+                               id = id,
+                               name = profile.Username,
+                               gameIds = (from g in profile
+                                          select g.Id).ToArray(),
+                               friends = (from f in friends
+                                          select new friend
+                                          {
+                                              id = f.Id,
+                                              name = f.Username,
+                                          }).ToArray(),
+                           }).ToArray(),
             };
         }
 
@@ -74,16 +74,24 @@ namespace SteamMatchUp.Website.Controllers
             {
                 success = true,
                 results = (from id in gameIds.AsParallel()
-                         let g = this._gameParser.GetInfo(id)
-                         where g != null
-                         select new game
-                         {
-                             id = id,
-                             iconUrl = g.IconUrl.ToString(),
-                             name = g.Name,
-                             features = g.Features,
-                             genres = g.Genres,
-                         }).ToArray(),
+                           let g = this._gameParser.GetInfo(id)
+                           select ConvertGame(id, g)).ToArray(),
+            };
+        }
+
+        private game ConvertGame(string id, GameInfo g)
+        {
+            if (g == null)
+                return new game { id = id, isValid = false };
+
+            return new game
+            {
+                id = id,
+                isValid = true,
+                iconUrl = g.IconUrl.ToString(),
+                name = g.Name,
+                features = g.Features,
+                genres = g.Genres,
             };
         }
     }

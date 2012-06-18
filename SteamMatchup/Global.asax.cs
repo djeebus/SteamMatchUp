@@ -49,12 +49,13 @@ namespace SteamMatchUp.Website
         {
             public void Process(BundleResponse bundle)
             {
+                bundle.ContentType = "text/javascript";
             }
         }
 
         private void RegisterBundles(BundleCollection bundles)
         {
-            var libBundle = new Bundle("~/scripts/lib", typeof(NoTransform));            
+            var libBundle = new Bundle("~/scripts/lib", typeof(NoTransform)); 
             libBundle.AddFile("~/scripts/jquery-1.7.2.js");
 			libBundle.AddFile("~/scripts/jquery-ui-1.8.20.js");
             libBundle.AddFile("~/scripts/jquery.tmpl.js");
@@ -62,6 +63,7 @@ namespace SteamMatchUp.Website
             libBundle.AddFile("~/scripts/knockout.simpleGrid.js");
             libBundle.AddFile("~/scripts/underscore.js");
             libBundle.AddFile("~/scripts/json2.js");
+            libBundle.AddFile("~/scripts/storage.js");
             bundles.Add(libBundle);
 
             var localBundle = new Bundle("~/scripts/local", typeof(NoTransform));

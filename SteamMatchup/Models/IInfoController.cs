@@ -51,6 +51,7 @@ namespace SteamMatchUp.Website.Models
     public class game
     {
         public string id { get; set; }
+        public bool isValid { get; set; }
         public string name { get; set; }
         public string iconUrl { get; set; }
         public string[] features { get; set; }

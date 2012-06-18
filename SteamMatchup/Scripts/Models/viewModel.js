@@ -1,20 +1,35 @@
-﻿var currentAjaxRequests = 0;
-$(document).ajaxSend(function () {
-	currentAjaxRequests++;
+﻿function configuraAjaxHandling() {
+    var currentAjaxRequests = 0;
+    $(document).ajaxSend(function () {
+        currentAjaxRequests++;
 
-	console.log('showing ajax progress');
-	$('#ajax-in-progress').show();
-});
-$(document).ajaxComplete(function () {
-	if (currentAjaxRequests > 0) {
-		currentAjaxRequests--;
+        $('#ajax-in-progress').show();
+    });
 
-		if (currentAjaxRequests == 0) {
-			console.log('hiding ajax progress');
-			$('#ajax-in-progress').hide();
-		}
-	}
-});
+    $(document).ajaxComplete(function () {
+        if (currentAjaxRequests <= 0) {
+            return;
+        }
+
+        currentAjaxRequests--;
+
+        if (currentAjaxRequests == 0) {
+            $('#ajax-in-progress').hide();
+        }
+    });
+}
+
+function loadUsers() {
+    var users = localStorage.getItem('users');
+    if (users != null) {
+        localStorage.removeItem('users');
+
+        var list = users.split(',');
+        for (var x = 0; x < list.length; x++) {
+            addGamer(list[x], rootModel.isSearching);
+        }
+    }
+}
 
 var ViewModel = function () {
     var self = this;
@@ -75,6 +90,8 @@ var ViewModel = function () {
     });
     this.gamers.subscribe(function (newValue) {
         self.recalculateGamesTable();
+
+        checkForMissingGameMetadata();
     });
 
     this.recalculateGamesTable = function () {
@@ -203,3 +220,6 @@ var ViewModel = function () {
 var rootModel = new ViewModel();
 
 ko.applyBindings(rootModel);
+
+configuraAjaxHandling();
+loadUsers();
