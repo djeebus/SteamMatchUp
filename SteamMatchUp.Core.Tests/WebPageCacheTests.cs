@@ -3,67 +3,56 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading;
+using System.Threading.Tasks;
+using Moq;
+using System.IO;
+using System.Xml;
 
 namespace SteamMatchUp.Core.Tests
 {
     [TestClass]
     public class WebPageCacheTests
     {
-        class MockCleaner : IWebpageCleaner
+        Moq.Mock<IWebpageCleaner> _webpageCleaner = new Moq.Mock<IWebpageCleaner>();
+        Moq.Mock<IHttpClient> _httpClient = new Moq.Mock<IHttpClient>();
+
+        private WebpageCache GetMockCache(string rootPath = @".\temp")
         {
-            public System.Xml.XmlDocument GetDocFromContent(string content)
-            {
-                var doc = new System.Xml.XmlDocument();
-                doc.LoadXml(content);
-                return doc;
-            }
-        }
-
-        class MockHttpClient : IHttpClient
-        {
-            string _content;
-
-            public int TotalCalls { get; set; }
-
-            public MockHttpClient(string content)
-            {
-                this._content = content;
-            }
-
-            public string GetContent(Uri uri, Dictionary<System.Net.HttpRequestHeader, string> headers)
-            {
-                this.TotalCalls++;
-
-                return this._content;
-            }
+            return new SteamMatchUp.WebpageCache(rootPath, _webpageCleaner.Object , _httpClient.Object);
         }
 
         [TestMethod]
-        public void TestRelativePath()
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void RelativeRootInNonWebApp()
         {
-            var staticContent = "<magical>hello</magical>";
+            System.Web.HttpContext.Current = null;
+            GetMockCache("~/temp");
+        }
 
-            var cache = GetMockCache(staticContent, null);
+        [TestMethod]
+        public void RelativeRootInWebApp()
+        {
+            var request = new System.Web.HttpRequest("~/abc.html", "http://www.google.com/", "?123=123");
+            var response = new System.Web.HttpResponse(new StringWriter());
+            var context = new System.Web.HttpContext(request, response);
 
-            var content = cache.GetContent(new Uri("http://localhost./test/"));
-            Assert.IsNotNull(content);
-            Assert.IsTrue(content.ChildNodes.Count == 1);
+            System.Web.HttpContext.Current = context;
 
-            var xMagical = content.ChildNodes[0];
-            Assert.IsNotNull(xMagical);
-            Assert.IsTrue(xMagical.LocalName == "magical");
-            Assert.IsTrue(xMagical.InnerText == "hello");
+            GetMockCache("~/temp");
         }
 
         [TestMethod]
         public void TestAbsolutePath()
         {
-            var staticContent = "<magical>hello</magical>";
+            var uri = new Uri("http://localhost./test/");
 
-            var cache = GetMockCache(staticContent, @"C:\temp\steamtests\");
+            this._httpClient
+                .Setup(c => c.GetContent(uri, It.IsAny<Dictionary<System.Net.HttpRequestHeader, string>>()))
+                .Returns("<magical>hello</magical>");
 
-            var content = cache.GetContent(new Uri("http://localhost./test/"));
+            var cache = GetMockCache(@"C:\temp\steamtests\");
+
+            var content = cache.GetContent(uri, true);
             Assert.IsNotNull(content);
             Assert.IsTrue(content.ChildNodes.Count == 1);
 
@@ -77,86 +66,101 @@ namespace SteamMatchUp.Core.Tests
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestNullUri()
         {
-            var cache = GetMockCache("<magical></magical>", null);
+            var cache = GetMockCache();
 
-            cache.GetContent(null);
+            cache.GetContent(null, true);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestNullConstructorParam1()
         {
-            new WebpageCache(null, new MockCleaner(), new HttpClient());
+            new WebpageCache(null, _webpageCleaner.Object, _httpClient.Object);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestNullConstructorParam2()
         {
-            new WebpageCache("abc", null, new HttpClient());
+            new WebpageCache("abc", null, _httpClient.Object);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestNullConstructorParam3()
         {
-            new WebpageCache("abc", new MockCleaner(), null);
+            new WebpageCache("abc", _webpageCleaner.Object, null);
         }
 
         [TestMethod]
         public void TestRepeatDownload()
         {
-            MockHttpClient client;
-            var cache = GetMockCache("<magical></magical>", null, out client);
+            var raw = "<h>1</h>";
+
+            var doc = new XmlDocument();
+            doc.LoadXml(raw);
+
             var uri = new Uri("http://temp2/temp2");
 
-            cache.GetContent(uri);
-            cache.GetContent(uri);
+            _httpClient
+                .Setup(s => s.GetContent(uri, null))
+                .Returns(raw);
 
-            Assert.AreEqual(1, client.TotalCalls);
+            _webpageCleaner
+                .Setup(s => s.GetDocFromContent(It.IsAny<string>()))
+                .Returns(doc);
+
+            var cache = GetMockCache();
+
+            var content1 = cache.GetContent(uri, true);
+            var content2 = cache.GetContent(uri, true);
+
+            Assert.IsNotNull(content1);
+            Assert.IsNotNull(content2);
+            Assert.AreEqual(content1.OuterXml, content2.OuterXml);
         }
 
         [TestMethod]
         public void TestMultithreadDownload()
         {
-            MockHttpClient client;
-            var cache = GetMockCache("<magical></magical>", null, out client);
             var uri = new Uri("http://temp/temp");
 
-            var total = 100;
+            int x = 0;
+            this._httpClient
+                .Setup(s => s.GetContent(uri, It.IsAny<Dictionary<System.Net.HttpRequestHeader, string>>()))
+                .Callback(() =>
+                {
+                    if (x != 0)
+                        throw new ArgumentOutOfRangeException("x", x, "Called too often");
 
-            var ids = new List<int>();
-            var threads = (from x in Enumerable.Range(1, total)
-                           let s = new ThreadStart(() => { 
-                               cache.GetContent(uri); 
-                               ids.Add(Thread.CurrentThread.ManagedThreadId); 
-                           })
-                           let t = new Thread(s)
-                           select t).AsParallel();
+                    x++;
+                })
+                .Returns("<hello>world</hello>");
 
-            foreach (var thread in threads)
+            this._webpageCleaner
+                .Setup(s => s.GetDocFromContent(It.IsAny<string>()))
+                .Returns<string>(s =>
+                {
+                    var doc = new XmlDocument();
+                    doc.LoadXml(s);
+                    return doc;
+                });
+            
+            var cache = GetMockCache();
+
+            var total = 64;
+
+            var tasks = (from i in Enumerable.Range(0, total)
+                         select new Task(() => { cache.GetContent(uri, true); })).ToArray();
+
+            foreach (var task in tasks)
             {
-                thread.Start();
+                task.Start();
             }
 
-            var items = threads.ToArray();
-            Assert.AreEqual(total, items.Length);
-            Assert.AreEqual(1, client.TotalCalls);
-            Assert.AreNotEqual(1, ids.GroupBy(id => id).Count());
-        }
+            Task.WaitAll(tasks);
 
-        private static WebpageCache GetMockCache(string staticContent, string rootPath)
-        {
-            MockHttpClient client;
-
-            return GetMockCache(staticContent, rootPath, out client);
-        }
-
-        private static WebpageCache GetMockCache(string staticContent, string rootPath, out MockHttpClient client)
-        {
-            client = new MockHttpClient(staticContent);
-
-            return new SteamMatchUp.WebpageCache(rootPath ?? ".\\temp", new MockCleaner(), client);
+            Assert.AreEqual(total, tasks.Length);
         }
     }
 }

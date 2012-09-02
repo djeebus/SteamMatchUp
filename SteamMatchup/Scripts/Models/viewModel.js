@@ -19,18 +19,6 @@
     });
 }
 
-function loadUsers() {
-    var users = localStorage.getItem('users');
-    if (users != null) {
-        localStorage.removeItem('users');
-
-        var list = users.split(',');
-        for (var x = 0; x < list.length; x++) {
-            addGamer(list[x], rootModel.isSearching);
-        }
-    }
-}
-
 var ViewModel = function () {
     var self = this;
 
@@ -57,6 +45,8 @@ var ViewModel = function () {
         result.addResult();
     });
 
+    this.numberOfCommonGamers = ko.observable(1);
+
     this.gamers = ko.observableArray([]);
 
     this.games = ko.observableArray([]);
@@ -66,6 +56,8 @@ var ViewModel = function () {
     this.features = ko.observableArray([]);
 
     this.genres = ko.observableArray([]);
+
+    this.commonUsers = ko.observableArray([]);
 
     this.isSearching = ko.observable(false);
 
@@ -77,6 +69,10 @@ var ViewModel = function () {
     this.showFilterDialog = function () {
         $('#filter-dialog').dialog({ width: 600 });
     };
+
+    this.numberOfCommonGamers.subscribe(function (newValue) {
+        self.recalculateGamesTable();
+    });
 
     this.games.subscribe(function (newValue) {
         console.log('recalculating features of ' + newValue.length + ' games ... ');
@@ -92,7 +88,20 @@ var ViewModel = function () {
         self.recalculateGamesTable();
 
         checkForMissingGameMetadata();
+
+        updateCommonUsersList();
     });
+
+    function updateCommonUsersList() {
+        var gamers = rootModel.gamers();
+
+        var users = [];
+        for (var x = 1; x <= gamers.length; x++) {
+            users.push({ name: x.toString(), value: x, id: 'u_' + x });
+        }
+
+        rootModel.commonUsers(users);
+    };
 
     this.recalculateGamesTable = function () {
         console.log('recalculating games table ... ');
@@ -123,8 +132,10 @@ var ViewModel = function () {
             };
         });
 
+        var currentPlayers = self.numberOfCommonGamers();
+
         result = _.filter(result, function (r) {
-            return r.players.length > 0;
+            return r.players.length >= currentPlayers;
         });
 
         this.gamesTable(result);
@@ -222,4 +233,3 @@ var rootModel = new ViewModel();
 ko.applyBindings(rootModel);
 
 configuraAjaxHandling();
-loadUsers();

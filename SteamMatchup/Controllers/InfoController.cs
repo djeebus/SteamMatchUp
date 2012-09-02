@@ -4,6 +4,8 @@ using System.Linq;
 using System.Web;
 using System.Web.Http;
 using SteamMatchUp.Website.Models;
+using System.Web.Caching;
+using System.Diagnostics;
 
 namespace SteamMatchUp.Website.Controllers
 {
@@ -11,53 +13,44 @@ namespace SteamMatchUp.Website.Controllers
     {
         private readonly ISteamGameParser _gameParser;
         private readonly ISteamProfileParser _profileParser;
-        private readonly ISteamProfileSearcher _profileSearcher;
+        private readonly SteamApi.ISteamApi _steamApi;
+
+        private readonly Cache _cache;
 
         public InfoController(
             ISteamGameParser gameParser,
             ISteamProfileParser profileParser,
-            ISteamProfileSearcher profileSearcher)
+            SteamApi.ISteamApi steamApi)
         {
             this._gameParser = gameParser;
             this._profileParser = profileParser;
-            this._profileSearcher = profileSearcher;
-        }
+            this._steamApi = steamApi;
 
-        [ActionName("players"), HttpGet]
-        public searchPlayersResponse Search(string term)
-        {
-            var result = this._profileSearcher.Search(term);
-
-            return new searchPlayersResponse
-            {
-                success = true,
-                errorMessage = null,
-                results = (from r in result
-                           select new result
-                           {
-                               id = r.Id,
-                               iconUrl = r.IconUrl.ToString(),
-                               name = r.Username,
-                           }).ToArray(),
-            };
+            this._cache = System.Web.HttpContext.Current.Cache;
         }
 
         [ActionName("gamers"), HttpGet]
-        public getGamersResponse GetGamers(string[] gamerIds)
+        public getGamersResponse GetGamers([FromUri] string[] gamerIds)
         {
+            if (gamerIds == null || gamerIds.Length == 0)
+                throw new ArgumentNullException("gamerIds");
+
+            var users = _steamApi.GetPlayerSummaries(gamerIds);
+
             return new getGamersResponse
             {
                 success = true,
-                results = (from id in gamerIds
-                           let profile = _profileParser.GetGames(id)
-                           let friends = _profileParser.GetFriends(id)
+                results = (from user in users                           
+                           let profile = _profileParser.GetGames(user.ProfileUrl)
+                           let friends = _profileParser.GetFriends(user.ProfileUrl)
                            select new gamer
                            {
-                               id = id,
+                               id = user.SteamId,
                                name = profile.Username,
                                gameIds = (from g in profile
                                           select g.Id).ToArray(),
                                friends = (from f in friends
+                                          orderby f.Username
                                           select new friend
                                           {
                                               id = f.Id,
@@ -68,15 +61,47 @@ namespace SteamMatchUp.Website.Controllers
         }
 
         [ActionName("games"), HttpGet]
-        public getGamesResponse GetGames(string[] gameIds)
+        public getGamesResponse GetGames([FromUri] string[] gameIds)
         {
-            return new getGamesResponse
+            DateTime start = DateTime.Now;
+
+            var model = new getGamesResponse
             {
                 success = true,
                 results = (from id in gameIds.AsParallel()
-                           let g = this._gameParser.GetInfo(id)
-                           select ConvertGame(id, g)).ToArray(),
+                           let g = retrieveGame(id) ?? downloadGame(id)
+                           select g).ToArray(),
             };
+
+            DateTime finishe = DateTime.Now;
+
+            Trace.WriteLine(string.Format("Retrieving {0} games took {1} milliseconds", gameIds.Length, (finishe - start).TotalMilliseconds));
+
+            return model;
+        }
+
+        private game downloadGame(string id)
+        {
+            var g = this._gameParser.GetInfo(id);
+
+            var model = ConvertGame(id, g);
+
+            storeGame(model);
+
+            return model;
+        }
+
+        private void storeGame(game game)
+        {
+            if (game == null)
+                throw new ArgumentNullException("game");
+
+            _cache.Add(game.id, game, null, Cache.NoAbsoluteExpiration, new TimeSpan(24, 0, 0), CacheItemPriority.Normal, null);
+        }
+
+        private game retrieveGame(string id)
+        {
+            return _cache[id] as game;
         }
 
         private game ConvertGame(string id, GameInfo g)

@@ -9,55 +9,83 @@ namespace SteamMatchUp.Core.Tests
     [TestClass]
     public class SteamProfileParserTests
     {
-        static readonly IWebpageCache _cache = new ResourceWebPageCache();
+        const string ValidSteamId = "76561197961887342";
+        static readonly Uri ValidSteamProfileUrl = new Uri("http://steamcommunity.com/id/djeebus/");
 
         [TestMethod]
-        public void GetFriendsWithInvalidUserId()
+        public void GetGames()
         {
-            var parser = new SteamProfileParser(_cache);
+            var parser = GetProfileParser();
 
-            var friends = parser.GetFriends("invalid");
-            Assert.IsNull(friends);
-        }
+            var games = parser.GetGames(ValidSteamProfileUrl);
 
-        [TestMethod]
-        public void TestFriends()
-        {
-            var parser = new SteamProfileParser(_cache);
+            Assert.IsNotNull(games);
+            Assert.IsNotNull(games.Username);
 
-            var friends = parser.GetFriends("djeebus-friends.xhtml");
-            Assert.IsNotNull(friends);
-            Assert.AreEqual("djeebus", friends.Username);
-            Assert.AreEqual(25, friends.Count);
+            Assert.AreNotEqual(0, games.Count);
 
-            foreach (var friend in friends)
+            foreach (var game in games)
             {
-                Assert.IsFalse(string.IsNullOrWhiteSpace(friend.CommunityUrl));
-                Assert.IsFalse(string.IsNullOrWhiteSpace(friend.IconUrl));
-                Assert.IsFalse(string.IsNullOrWhiteSpace(friend.Id));
-                Assert.IsFalse(string.IsNullOrWhiteSpace(friend.Username));
+                Assert.IsNotNull(game);
+                Assert.IsNotNull(game.IconUrl);
+                Assert.IsNotNull(game.Id);
+                Assert.IsNotNull(game.Name);
+                Assert.IsNotNull(game.SteamUrl);
             }
         }
 
         [TestMethod]
-        public void TestGames()
+        public void GetFriends()
         {
-            var parser = new SteamProfileParser(_cache);
+            var parser = GetProfileParser();
 
-            var result = parser.GetGames("djeebus-games.xhtml");
+            var friends = parser.GetFriends(ValidSteamProfileUrl);
 
-            Assert.AreEqual("djeebus", result.Username);
-            Assert.AreEqual(231, result.Count);
+            Assert.IsNotNull(friends);
+            Assert.AreNotEqual(0, friends.Count);
+
+            foreach (var friend in friends)
+            {
+                Assert.IsNotNull(friend);
+                Assert.IsNotNull(friend.CommunityUrl);
+                Assert.IsNotNull(friend.IconUrl);
+                Assert.IsNotNull(friend.Id);
+                Assert.IsNotNull(friend.Username);
+            }
+        }
+
+        private static SteamProfileParser GetProfileParser()
+        {
+            string rootDir = AppDomain.CurrentDomain.DynamicDirectory ?? AppDomain.CurrentDomain.BaseDirectory;
+
+            var cleaner = new WebpageCleaner();
+            var client = new HttpClient();
+
+            var cache = new WebpageCache(rootDir, cleaner, client);
+
+            var parser = new SteamProfileParser(cache);
+            return parser;
         }
 
         [TestMethod]
-        public void TestUnknownUserGame()
+        public void GetUser()
         {
-            var parser = new SteamProfileParser(_cache);
+            string rootDir = AppDomain.CurrentDomain.DynamicDirectory ?? AppDomain.CurrentDomain.BaseDirectory;
 
-            var result = parser.GetGames("invalid");
+            var cleaner = new WebpageCleaner();
+            var client = new HttpClient();
 
-            Assert.IsNull(result);
+            var cache = new WebpageCache(rootDir, cleaner, client);
+
+            var parser = new SteamProfileParser(cache);
+
+            var user = parser.GetUser(ValidSteamProfileUrl);
+
+            Assert.IsNotNull(user);
+            Assert.IsNotNull(user.CommunityUrl);
+            Assert.IsNotNull(user.IconUrl);
+            Assert.IsNotNull(user.Id);
+            Assert.IsNotNull(user.Username);
         }
     }
 }

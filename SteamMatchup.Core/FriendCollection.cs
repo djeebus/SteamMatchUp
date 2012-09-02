@@ -7,7 +7,8 @@ namespace SteamMatchUp
 {
 	public class FriendCollection : List<User>
 	{
-		public string Username { get; set; }
+		public string SteamId { get; set; }
+        public string Username { get; set; }
 
         public FriendCollection(IEnumerable<User> friends)
 			: base(friends)

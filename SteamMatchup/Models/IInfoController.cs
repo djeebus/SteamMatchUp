@@ -7,7 +7,6 @@ namespace SteamMatchUp.Website.Models
 {
     public interface IInfoController
     {
-        searchPlayersResponse Search(string term);
         getGamersResponse GetGamers(string[] gamerIds);
         getGamesResponse GetGames(string[] gameIds);
     }

@@ -32,7 +32,7 @@ namespace SteamMatchUp.Website.App_Start
 			kernel.Bind<IWebpageCleaner>().To<WebpageCleaner>().InRequestScope();
 			kernel.Bind<IWebpageCache>().To<WebpageCache>().InRequestScope().WithContructorArgumentFromAppSetting("rootDir", "Root Cache Dir");
 			kernel.Bind<ISteamGameParser>().To<SteamGameParser>().InRequestScope();
-			kernel.Bind<ISteamProfileSearcher>().To<SteamProfileSearcher>().InRequestScope();
+            kernel.Bind<SteamApi.ISteamApi>().To<SteamApi.SteamApiClient>().InRequestScope().WithPropertyValue("Key", ConfigurationManager.AppSettings["Steam Api Key"]);
 		}
 
 		private static readonly Bootstrapper bootstrapper = new Bootstrapper();
@@ -45,43 +45,6 @@ namespace SteamMatchUp.Website.App_Start
 			DynamicModuleUtility.RegisterModule(typeof(OnePerRequestHttpModule));
 			DynamicModuleUtility.RegisterModule(typeof(NinjectHttpModule));
 			bootstrapper.Initialize(CreateKernel);
-
-			System.Web.Http.GlobalConfiguration.Configuration.ServiceResolver.SetResolver(
-				new NinjectServiceResolver(bootstrapper.Kernel));
-		}
-
-		class NinjectServiceResolver : System.Web.Http.Services.IDependencyResolver
-		{
-			private readonly IKernel _kernel;
-
-			public NinjectServiceResolver(IKernel kernel)
-			{
-				this._kernel = kernel;
-			}
-
-			public object GetService(Type serviceType)
-			{
-				try
-				{
-					return this._kernel.Get(serviceType);
-				}
-				catch (ActivationException)
-				{
-					return null;
-				}
-			}
-
-			public System.Collections.Generic.IEnumerable<object> GetServices(Type serviceType)
-			{
-				try
-				{
-					return this._kernel.GetAll(serviceType);
-				}
-				catch (ActivationException)
-				{
-					return null;
-				}
-			}
 		}
 
 		/// <summary>
@@ -107,6 +70,9 @@ namespace SteamMatchUp.Website.App_Start
 			kernel.Bind<IHttpModule>().To<HttpApplicationInitializationHttpModule>();
 
 			RegisterServices(kernel);
+
+            System.Web.Http.GlobalConfiguration.Configuration.DependencyResolver = new NinjectDependencyResolver(kernel);
+
 			return kernel;
 		}
 	}

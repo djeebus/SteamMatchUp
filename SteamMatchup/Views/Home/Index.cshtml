@@ -1,4 +1,6 @@
-﻿@using System.Web.Mvc.Html
+﻿@model SteamMatchUp.Website.Models.AuthModel
+
+@using System.Web.Mvc.Html
 @{
     this.Layout = null;
 
@@ -24,24 +26,19 @@
             </header>
         
             <section id="configuration" class="row">
-                <form id="add-player">
-                    <h2>Add Players</h2>
-
-                    <input type="text" name="text" data-bind="value: searchTerm" />
-                    <input type="submit" value="Search" data-bind="click: search, disable: isSearching" />
+                @if (this.User.Identity.IsAuthenticated)
+                {
+                    @Html.ActionLink("Log Off", "SignOut")
+                }
+                else
+                {
+                <form id="steam-login" action="@Url.Action("BeginAuth")" method="post">
+                    <img src="http://cdn.steamcommunity.com/public/images/signinthroughsteam/sits_large_border.png" 
+                         onclick="$(this).parents('form').submit()"
+                         height="51" width="118"
+                         alt="Sign In Through Steam" />
                 </form>
-
-                <div id="search-results" class="arrow_box" data-bind="visible: results().length > 0">
-                    <h3><span data-bind="text: results().length"></span> Search Result<span data-bind="">s</span></h3>
-                    <ul data-bind="template: { name: 'search-result', foreach: results }"></ul>
-                </div>
-
-                <script type="text/html" id="search-result">
-                    <li class='search-result'>
-                        <span data-bind="text: name"></span>
-                        <a href="javascript:void(0)" data-bind="click: addResult, visible: canSelect">add</a>
-                    </li>
-                </script>
+                }
             </section>
 
             <section id="filters" class="row">
@@ -83,7 +80,19 @@
                         <h3>Genres</h3>
                         <ul data-bind="template: { name: 'genre', foreach: genres }"></ul>
                     </div>
+
+                    <div id="common-players" data-bind="visible: commonUsers().length > 1">
+                        <h3>Common Gamers</h3>
+                        <ul data-bind="template: { name: 'users', foreach: commonUsers }"></ul>
+                    </div>
                 </div>
+
+                <script type="text/html" id="users">
+                    <li class='user'>
+                        <input type='radio' name='users' data-bind='attr: { value: value, id: id }, checked: $parent.numberOfCommonGamers'  />
+                        <label data-bind='attr: { for: id }, text: name'></label>
+                    </li>
+                </script>
 
                 <script type="text/html" id="feature">
                     <li class='feature'>
@@ -110,8 +119,15 @@
         </div>
 
         <script type="text/javascript" src="@url.Content("~/scripts/lib")"></script>
-        <script type="text/javascript" src="http://fgnass.github.com/spin.js/spin.js"></script>
-
         <script type="text/javascript" src="@url.Content("~/scripts/local")"></script>
+
+        @if (this.User.Identity.IsAuthenticated)
+        {
+        <script type="text/javascript">
+            setTimeout(function () {
+                addGamer('@this.User.Identity.Name', rootModel.isSearching); 
+            }, 1);
+        </script>
+        }
     </body>
 </html>

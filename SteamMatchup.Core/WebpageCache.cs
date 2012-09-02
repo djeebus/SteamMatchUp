@@ -50,7 +50,7 @@ namespace SteamMatchUp
 			return Path.GetFullPath(rootDir);
 		}
 
-		public XmlDocument GetContent(Uri url)
+		public XmlDocument GetContent(Uri url, bool scrubHtml)
 		{
             if (url == null)
                 throw new ArgumentNullException("url");
@@ -77,19 +77,19 @@ namespace SteamMatchUp
 					return doc;
 				}
 
-                var dt = DateTime.Now;
-
                 var content = this._httpClient.GetContent(url, new Dictionary<HttpRequestHeader, string> {
                     { HttpRequestHeader.AcceptLanguage, "en-US,en;q=0.8" },
                     { HttpRequestHeader.Cookie, "Steam_Language=english; community_game_list_scroll_size=10; timezoneOffset=-14400,0; birthtime=157795201; lastagecheckage=1-January-1975;" },
                     { HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.162 Safari/535.19" },
                 });
 
-				var duration = DateTime.Now - dt;
-
-				Trace.WriteLine(string.Format("Downloaded {0} in {1} ms", url, duration.TotalMilliseconds), "WebpageCache");
-
-				doc = this._cleaner.GetDocFromContent(content);
+                if (scrubHtml)
+                    doc = this._cleaner.GetDocFromContent(content);
+                else
+                {
+                    doc = new XmlDocument();
+                    doc.LoadXml(content);
+                }
 
 				this.Save(url, doc);
 

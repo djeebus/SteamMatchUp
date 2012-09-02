@@ -8,6 +8,6 @@ namespace SteamMatchUp
 {
 	public interface IWebpageCache
 	{
-		XmlDocument GetContent(Uri url);
+		XmlDocument GetContent(Uri url, bool scrubHtml);
 	}
 }

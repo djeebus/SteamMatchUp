@@ -16,31 +16,35 @@
 }
 
 function addGamer(gamerId, inProcessMarker) {
-	inProcessMarker(true);
+    inProcessMarker(true);
 
-	$.ajax({
-	    url: '/api/info/gamers',
-	    data: {
-	        gamerIds: gamerId
-	    },
-	    complete: function () {
-	        inProcessMarker(false);
-	    },
-	    success: function (data) {
-	        if (!data || !data.success || data.results.length <= 0) {
-	            alert('Gamer does not exist');
-	            return;
-	        }
+    var payload = {};
+    if (gamerId != null) {
+        payload.gamerIds = gamerId;
+    }
 
-	        for (var x = 0; x < data.results.length; x++) {
-	            rootModel.gamers.push(new GamerModel(data.results[x]));
-	            
-                var currentUsers = localStorage.getItem('users');
-	            currentUsers += (currentUsers == null ? '' : ',') + gamerId;
-	            localStorage.setItem('users', currentUsers);
-	        }
-	    }
-	});
+    $.ajax({
+        url: '/api/info/gamers',
+        data: payload,
+        complete: function () {
+            inProcessMarker(false);
+        },
+        success: function (data) {
+            if (!data || !data.success || data.results.length <= 0) {
+                alert('Gamer does not exist');
+                return;
+            }
+
+            var newGamers = [];
+            for (var x = 0; x < data.results.length; x++) {
+                var gamer = data.results[x];
+
+                newGamers.push(new GamerModel(gamer));
+            }
+
+            rootModel.gamers.push.apply(rootModel.gamers, newGamers);
+        }
+    });
 }
 
 function updateSelectableList(source, games, mapper) {
@@ -116,6 +120,7 @@ function checkForMissingGameMetadata() {
     }
 
     missingGameThreadId = setTimeout(function () {
+        var start = new Date().getTime();
         do {
             var gamers = rootModel.gamers();
 
@@ -135,18 +140,25 @@ function checkForMissingGameMetadata() {
 
             if (missingGameIds.length == 0) {
                 console.log('No missing games');
-                return;
+                break;
             }
 
             $('#status').html('Downloading ' + missingGameIds.length + ' games');
 
-            var sliceLength = 10;
+            var sliceLength = 20;
             for (var x = 0; x < missingGameIds.length; x += sliceLength) {
                 var thisCheck = missingGameIds.slice(x, x + sliceLength);
 
-                getMissingGames(thisCheck);
+                var result = getMissingGames(thisCheck);
+                if (!result) {
+                    return;
+                }
             }
         } while (true);
+
+        var stop = new Date().getTime();
+
+        console.log('downloading games took ' + (stop - start) / 1000 + ' seconds');
 
         missingGameThreadId = null;
     });
@@ -168,20 +180,23 @@ function getMissingGames(missingGameIds, gamesBucket) {
         async: false,
         url: '/api/info/games',
         data: payload,
+        error: function () {
+            return false;
+        },
         success: function (data) {
             if (!data || !data.success || data.results.length <= 0) {
-                //alert('Games do not exist'); // might just happen because the games that are left don't have store pages
-                return;
+                return false;
             }
 
-            var games = rootModel.games();
-
+            //var games = rootModel.games();
+            var g = [];
             for (var x = 0; x < data.results.length; x++) {
                 var model = new GameModel(data.results[x]);
-                games.push(model);
+                g.push(model);
             }
+            rootModel.games.push.apply(rootModel.games, g);
 
-            rootModel.games(games);
+            return true;
         }
     });
 }

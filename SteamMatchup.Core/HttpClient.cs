@@ -27,6 +27,9 @@ namespace SteamMatchUp
                 DateTime start = DateTime.Now;
                 var content = client.DownloadString(uri);
                 var elapsed = DateTime.Now - start;
+
+                Trace.WriteLine(string.Format("{0}: \n{1}", uri, content.Length));
+
                 Trace.WriteLine(string.Format("Downloading '{0}' took {1} milliseconds", uri, elapsed.TotalMilliseconds));
 
                 return content;

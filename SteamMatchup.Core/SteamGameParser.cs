@@ -37,7 +37,7 @@ namespace SteamMatchUp
 			DateTime dt = DateTime.Now;
 			var url = string.Format(AppUrlFormat, appId);
 
-			var doc = _cache.GetContent(new Uri(url));
+			var doc = _cache.GetContent(new Uri(url), true);
             if (doc == null)
                 return null;
 
@@ -63,7 +63,11 @@ namespace SteamMatchUp
 
 			var info = new GameInfo();
 
-			info.Name = doc.SelectSingleNode("//div[@class='game_name']").InnerText.Trim();
+            var name = doc.SelectSingleNode("//div[@class='game_name']");
+            if (name == null)
+                return null; // probably home page
+
+			info.Name = name.InnerText.Trim();
 
 			var specs = doc.SelectNodes("//div[@class='details_block']//div[@class='game_area_details_specs']");
 			info.Features = (from s in specs.Cast<XmlElement>()

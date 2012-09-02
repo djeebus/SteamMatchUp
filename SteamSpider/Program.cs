@@ -17,7 +17,7 @@ namespace SteamSpider
             var profileParser = new SteamProfileParser(cache);
             var gameParser = new SteamGameParser(cache);
 
-            var games = profileParser.GetGames("djeebus");
+            var games = profileParser.GetGames(new Uri("http://google.com/djeebus"));
 
             foreach (var g in games)
             {

@@ -6,6 +6,8 @@ using System.Xml;
 using System.IO;
 using System.Diagnostics;
 
+using Sgml;
+
 namespace SteamMatchUp
 {
 	public class WebpageCleaner : IWebpageCleaner
@@ -17,7 +19,7 @@ namespace SteamMatchUp
 
 			using (var streamReader = new StringReader(content))
 			{
-                Sgml.SgmlReader sgmlReader = new Sgml.SgmlReader
+                SgmlReader sgmlReader = new SgmlReader
                 {
                     DocType = "HTML",
                     InputStream = streamReader,
