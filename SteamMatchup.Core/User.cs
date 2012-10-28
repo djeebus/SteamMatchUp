@@ -9,15 +9,7 @@ namespace SteamMatchUp
     {
         public string Id { get; set; }
         public string Username { get; set; }
-        public string CommunityUrl { get; set; }
-        public string IconUrl { get; set; }
-
-        public List<Stat> Stats { get; set; }
-    }
-
-    public class Stat
-    {
-        public string Name { get; set; }
-        public string Value { get; set; }
+        public Uri CommunityUrl { get; set; }
+        public Uri IconUrl { get; set; }
     }
 }

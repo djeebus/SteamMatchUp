@@ -7,8 +7,8 @@ namespace SteamMatchUp
 {
 	public interface ISteamProfileParser
 	{
-        User GetUser(string steamCommunityId);
-		FriendCollection GetFriends(string steamCommunityId);
-		GameCollection GetGames(string steamCommunityId);
+        User GetUser(Uri profileUrl);
+        FriendCollection GetFriends(Uri profileUrl);
+        GameCollection GetGames(Uri profileUrl);
 	}
 }
